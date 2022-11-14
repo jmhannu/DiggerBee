@@ -13,7 +13,7 @@ namespace DiggerBee
         /// Initializes a new instance of the GhcRecursive class.
         /// </summary>
         public GhcRecursive()
-          : base("Subdivsion", "Subdivision",
+          : base("Recursive", "Recursive",
               "Recursive subdivision",
               "DiggerBee", "Placing")
         {
