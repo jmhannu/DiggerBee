@@ -62,7 +62,7 @@ namespace DiggerBee
     {
       get
       {
-        return Cricket.Properties.Resources.IconCsize;
+        return DiggerBee.Properties.Resources.IconCsize;
       }
     }
 
