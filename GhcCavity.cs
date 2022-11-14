@@ -14,7 +14,7 @@ namespace DiggerBee
         public GhcCavity()
           : base("Cavity", "Cavity",
               "Lofts cavity",
-              "Cricket", "Geometry")
+              "DiggerBee", "Geometry")
         {
         }
 

@@ -17,7 +17,7 @@ namespace DiggerBee
         public GhcPixelPlace()
           : base("Pixel placing", "PixelPlace",
               "Places holes/cavaites by the colours of an image",
-              "Cricket", "Placing")
+              "DiggerBee", "Placing")
         {
         }
 

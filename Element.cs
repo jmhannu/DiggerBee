@@ -12,21 +12,19 @@ namespace DiggerBee
 {
   class Element
   {
-    public Interval uLocation;
-    public Interval vLocation;
+        public Rectangle3d rectangle;
+        public bool last;
+        public double grey;
+        public Point3d center;
+        public double size;
 
-    public NurbsSurface panel;
-
-    public double size;
-
-    public Element(NurbsSurface _panel, Interval _uInterval, Interval _vInterval, double _size)
-    {
-      uLocation = _uInterval;
-      vLocation = _vInterval;
-
-      panel = _panel;
-
-      size = _size;
+        public Element(Rectangle3d _rectangle, double _avg, double _size)
+        {
+            rectangle = _rectangle;
+            last = false;
+            grey = _avg;
+            center = _rectangle.Center;
+            size = _size;
+        }
     }
-  }
 }

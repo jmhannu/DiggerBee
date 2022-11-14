@@ -12,7 +12,7 @@ namespace DiggerBee
         public GhcCsize()
           : base("Cavaty sizes", "Csize",
             "Gets the possible range size for milled cavaties based on the milling tool size",
-            "Cricket", "Cavaties")
+            "DiggerBee", "Cavaties")
         {
         }
 

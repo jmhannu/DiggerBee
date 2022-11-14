@@ -32,5 +32,17 @@
     <StartArguments></StartArguments>
     <StartAction>Program</StartAction>
   </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>bin\</OutputPath>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>bin\</OutputPath>
+  </PropertyGroup>
+  
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="Copy &quot;$(TargetPath)&quot; &quot;C:\Users\uk087937\AppData\Roaming\Grasshopper\Libraries\$(ProjectName).gha&quot;&#xD;&#xA;Erase &quot;$(TargetPath)&quot;" />
+  </Target>
 
 </Project>
