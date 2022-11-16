@@ -35,10 +35,11 @@ namespace DiggerBee
             // to import lists or trees of values, modify the ParamAccess flag.
             pManager.AddPointParameter("PointTree", "PT", "Point grid as tree", GH_ParamAccess.tree);
             pManager.AddPointParameter("repPoints", "RP", "Repelling points", GH_ParamAccess.list);
-            pManager.AddNumberParameter("charge", "C", "Charge", GH_ParamAccess.item, 10.0);
-            pManager.AddNumberParameter("decay", "D", "Decay", GH_ParamAccess.item, 1.0);
-            pManager.AddNumberParameter("threshold", "T", "Threshold between 0.0 and 1.0", GH_ParamAccess.item, 1.0);
-            pManager.AddIntegerParameter("crvDegree", "CD", "Nurbs curve degree", GH_ParamAccess.item, 3);
+            pManager.AddNumberParameter("charge", "C", "Charge", GH_ParamAccess.item);
+            pManager.AddNumberParameter("decay", "D", "Decay", GH_ParamAccess.item);
+            pManager.AddNumberParameter("threshold", "T", "Threshold between 0.0 and 1.0", GH_ParamAccess.item);
+            pManager.AddIntegerParameter("crvDegree", "CD", "Nurbs curve degree", GH_ParamAccess.item);
+            //pManager.AddIntegerParameter("crvDegree", "CD", "Nurbs curve degree", GH_ParamAccess.item, 3);
 
             // If you want to change properties of certain parameters, 
             // you can use the pManager instance to access them by index:
@@ -77,9 +78,16 @@ namespace DiggerBee
             double threshold = 0.0;
             int crvDegree = 0;
 
+            DA.GetDataTree(0, out pointTree);
+            DA.GetDataList(1, repPoints);
+            DA.GetData(2, ref charge);
+            DA.GetData(3, ref decay);
+            DA.GetData(4, ref threshold);
+            DA.GetData(5, ref crvDegree);
+ 
             // Then we need to access the input parameters individually. 
             // When data cannot be extracted from a parameter, we should abort this method.
-            if (!DA.GetDataTree(0, out pointTree)) return;
+            /*if (!DA.GetDataTree(0, out pointTree)) return;
             if (!DA.GetDataList(1, repPoints)) return;
             if (!DA.GetData(2, ref charge)) return;
             if (!DA.GetData(3, ref decay)) return;
@@ -101,8 +109,9 @@ namespace DiggerBee
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Threshold should be a value between 0.0 and 1.0");
                 return;
-            }
+            }*/
 
+            
             List<Vector3d> vectors = new List<Vector3d>();
             GH_Structure<GH_Point> cells = new GH_Structure<GH_Point>();
 
@@ -125,7 +134,8 @@ namespace DiggerBee
 
                 for (int j = 0; j < branchPoints.Count; j++)
                 {
-                    Vector3d vectorAt = field.TensorAt(new Point3d(branchPoints[j].Value.X, branchPoints[j].Value.Y, branchPoints[j].Value.Z));
+                    Point3d branchPoint3d = new Point3d(branchPoints[j].Value.X, branchPoints[j].Value.Y, branchPoints[j].Value.Z);
+                    Vector3d vectorAt = field.TensorAt(branchPoint3d);
 
                     if (vectorAt.Length > threshold)
                     {
@@ -135,15 +145,11 @@ namespace DiggerBee
 
                     vectors.Add(vectorAt);
 
-                    Point3d movedPoint = new Point3d(branchPoints[j].Value.X, branchPoints[j].Value.Y, branchPoints[j].Value.Z);
+                    Point3d movedPoint = branchPoint3d;
                     Transform move = Transform.Translation(vectorAt);
                     movedPoint.Transform(move);
 
-                    GH_Point movedGH = new GH_Point(movedPoint);
-
-                    //---- Or check this
-                    pointTree.RemoveData(branchPoints[j]);
-                    pointTree.Insert(movedGH, new GH_Path(i), j);
+                    pointTree.Branches[i][j] = new GH_Point(movedPoint);
                 }
             }
 
@@ -157,8 +163,6 @@ namespace DiggerBee
                 List<GH_Point> branchPoints1 = pointTree.Branches[i];
                 List<GH_Point> branchPoints2 = pointTree.Branches[i + 1];
 
-
-
                 for (int j = 0; j < branchPoints1.Count - 1; j++)
                 {
                     GH_Path path = new GH_Path(count);
@@ -171,20 +175,21 @@ namespace DiggerBee
                     count++;
                 }
             }
+            
 
             for (int i = 0; i < pointTree.Branches.Count; i++)
             {
-                List<GH_Point> ghPoints = pointTree.Branches[i];
-                List<Point3d> branchPoints = new List<Point3d>();
+                List<GH_Point> branchPoints = pointTree.Branches[i];
+                List<Point3d> ctrlPoints = new List<Point3d>();
 
-                for (int j  = 0; j < ghPoints.Count; j++)
+                for (int j = 0; j < branchPoints.Count; j++)
                 {
-                    branchPoints.Add(new Point3d(ghPoints[j].Value.X, ghPoints[j].Value.Y, ghPoints[j].Value.Z));
+                    ctrlPoints.Add(new Point3d(branchPoints[j].Value.X, branchPoints[j].Value.Y, branchPoints[j].Value.Z));
                 }
 
                 for (int j = 0; j < branchPoints.Count; j++)
                 {
-                    NurbsCurve crv1 = NurbsCurve.Create(false, 3, branchPoints);
+                    NurbsCurve crv1 = NurbsCurve.Create(false, 3, ctrlPoints);
                     vCrv.Add(crv1);
                 }
             }
@@ -195,8 +200,7 @@ namespace DiggerBee
 
                 for (int i = 0; i < pointTree.Branches.Count; i++)
                 {
-                    //OBS!! If something goes wrong check this. 
-                    GH_Point thisPoint = pointTree.get_DataItem(new GH_Path(i), j);
+                    GH_Point thisPoint = pointTree.Branches[i][j];
                     ctrlPoints.Add(new Point3d(thisPoint.Value.X, thisPoint.Value.Y, thisPoint.Value.Z));
                 }
 
@@ -208,10 +212,10 @@ namespace DiggerBee
             DA.SetDataTree(0, pointTree);
             DA.SetDataList(1, vCrv);
             DA.SetDataList(2, uCrv);
-            DA.SetDataTree(0, cells);
+            DA.SetDataTree(3, cells);
         }
 
-        Curve CreateSpiral(Plane plane, double r0, double r1, Int32 turns)
+      /*  Curve CreateSpiral(Plane plane, double r0, double r1, Int32 turns)
         {
             Line l0 = new Line(plane.Origin + r0 * plane.XAxis, plane.Origin + r1 * plane.XAxis);
             Line l1 = new Line(plane.Origin - r0 * plane.XAxis, plane.Origin - r1 * plane.XAxis);
@@ -234,7 +238,7 @@ namespace DiggerBee
             }
 
             return spiral;
-        }
+        }*/
 
         /// <summary>
         /// The Exposure property controls where in the panel a component icon 
