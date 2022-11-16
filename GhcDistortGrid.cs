@@ -104,7 +104,7 @@ namespace DiggerBee
             }
 
             List<Vector3d> vectors = new List<Vector3d>();
-            DataTree<Point3d> cells = new DataTree<Point3d>();
+            GH_Structure<GH_Point> cells = new GH_Structure<GH_Point>();
 
             GH_Field field = new GH_Field();
 
@@ -119,13 +119,13 @@ namespace DiggerBee
 
 
 
-            for (int i = 0; i < pointTree.BranchCount; i++)
+            for (int i = 0; i < pointTree.Branches.Count; i++)
             {
-                List<Point3d> branchPoints = pointTree.Branch(i);
+                List<GH_Point> branchPoints = pointTree.Branches[i];
 
                 for (int j = 0; j < branchPoints.Count; j++)
                 {
-                    Vector3d vectorAt = field.TensorAt(branchPoints[j]);
+                    Vector3d vectorAt = field.TensorAt(new Point3d(branchPoints[j].Value.X, branchPoints[j].Value.Y, branchPoints[j].Value.Z));
 
                     if (vectorAt.Length > threshold)
                     {
@@ -135,11 +135,15 @@ namespace DiggerBee
 
                     vectors.Add(vectorAt);
 
-                    Point3d movedPoint = branchPoints[j];
+                    Point3d movedPoint = new Point3d(branchPoints[j].Value.X, branchPoints[j].Value.Y, branchPoints[j].Value.Z);
                     Transform move = Transform.Translation(vectorAt);
                     movedPoint.Transform(move);
 
-                    pointTree.Branch(i)[j] = movedPoint;
+                    GH_Point movedGH = new GH_Point(movedPoint);
+
+                    //---- Or check this
+                    pointTree.RemoveData(branchPoints[j]);
+                    pointTree.Insert(movedGH, new GH_Path(i), j);
                 }
             }
 
@@ -148,10 +152,10 @@ namespace DiggerBee
 
             int count = 0;
 
-            for (int i = 0; i < pointTree.BranchCount - 1; i++)
+            for (int i = 0; i < pointTree.Branches.Count - 1; i++)
             {
-                List<Point3d> branchPoints1 = pointTree.Branch(i);
-                List<Point3d> branchPoints2 = pointTree.Branch(i + 1);
+                List<GH_Point> branchPoints1 = pointTree.Branches[i];
+                List<GH_Point> branchPoints2 = pointTree.Branches[i + 1];
 
 
 
@@ -159,19 +163,24 @@ namespace DiggerBee
                 {
                     GH_Path path = new GH_Path(count);
 
-                    cells.Add(branchPoints1[j], path);
-                    cells.Add(branchPoints1[j + 1], path);
-                    cells.Add(branchPoints2[j + 1], path);
-                    cells.Add(branchPoints2[j], path);
+                    cells.Append(branchPoints1[j], path);
+                    cells.Append(branchPoints1[j + 1], path);
+                    cells.Append(branchPoints2[j + 1], path);
+                    cells.Append(branchPoints2[j], path);
 
                     count++;
                 }
             }
 
-
-            for (int i = 0; i < pointTree.BranchCount; i++)
+            for (int i = 0; i < pointTree.Branches.Count; i++)
             {
-                List<Point3d> branchPoints = pointTree.Branch(i);
+                List<GH_Point> ghPoints = pointTree.Branches[i];
+                List<Point3d> branchPoints = new List<Point3d>();
+
+                for (int j  = 0; j < ghPoints.Count; j++)
+                {
+                    branchPoints.Add(new Point3d(ghPoints[j].Value.X, ghPoints[j].Value.Y, ghPoints[j].Value.Z));
+                }
 
                 for (int j = 0; j < branchPoints.Count; j++)
                 {
@@ -180,13 +189,15 @@ namespace DiggerBee
                 }
             }
 
-            for (int j = 0; j < pointTree.Branch(0).Count; j++)
+            for (int j = 0; j < pointTree.Branches[0].Count; j++)
             {
                 List<Point3d> ctrlPoints = new List<Point3d>();
 
                 for (int i = 0; i < pointTree.Branches.Count; i++)
                 {
-                    ctrlPoints.Add(pointTree.Branch(i)[j]);
+                    //OBS!! If something goes wrong check this. 
+                    GH_Point thisPoint = pointTree.get_DataItem(new GH_Path(i), j);
+                    ctrlPoints.Add(new Point3d(thisPoint.Value.X, thisPoint.Value.Y, thisPoint.Value.Z));
                 }
 
                 NurbsCurve crv2 = NurbsCurve.Create(false, crvDegree, ctrlPoints);
