@@ -25,7 +25,7 @@ namespace DiggerBee
         {
          pManager.AddCircleParameter("Circle", "Circle", "Circle to mark cavity", GH_ParamAccess.item);
          pManager.AddGenericParameter("Cinfo", "Cinfo", "Cinfo", GH_ParamAccess.item);
-         pManager.AddNumberParameter("Depth", "Depth", "Depth", GH_ParamAccess.item);
+         pManager.AddNumberParameter("Multiplicator", "Multiplicator", "Multiplicator", GH_ParamAccess.item);
     }
 
         /// <summary>
@@ -50,9 +50,10 @@ namespace DiggerBee
           DA.GetData(1, ref cInfo);
           DA.GetData(2, ref multiplicator);
 
+
           Cavity c = new Cavity(ci, multiplicator, cInfo);
 
-          DA.SetDataList(0, c.lofts);
+         DA.SetDataList(0, c.lofts);
          DA.SetData(1, c.cone);
          // DA.SetData(1, c.mDepth);
     }

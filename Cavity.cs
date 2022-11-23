@@ -19,6 +19,7 @@ namespace DiggerBee
     public double eDim;
     public List<Circle> circles;
     public double angle;
+    double directionRadians; 
 
     public Cavity(double _angle, double _toolWidth, double _toolLength, double _maxDepth, double _eDepth)
     {
@@ -28,9 +29,13 @@ namespace DiggerBee
     public Cavity(Circle _circle, double _multiplicator, CavityInfo _cInfo)
     {
       point = _circle.Center;
+
+            directionRadians = Vector3d.VectorAngle(Vector3d.ZAxis, _circle.Normal);
+
       double angle = Utility.ReMap(_multiplicator, 0.1, 1.0, _cInfo.Angles.Max, _cInfo.Angles.Min);
       double insertion = Utility.GetRandomNumber(_cInfo.Insertion.Min, _cInfo.Insertion.Max);
       CavitySetup(angle, _cInfo.ToolWidth, _cInfo.ToolLength, _cInfo.MaxDepth, insertion);
+
     }
 
       void CavitySetup(double _angle, double _toolWidth, double _toolLength, double _maxDepth, double _eDepth)
@@ -59,20 +64,38 @@ namespace DiggerBee
       Cone smallShape = CreateCone(circles[circles.Count - 1], _angle, _toolWidth);
       cone = Brep.CreateFromCone(smallShape, false);
 
-      Brep[] difference = Brep.CreateBooleanDifference(tempLofts[0], cone, 0.1);
+            if ((cone != null) && (tempLofts.Count > 0))
+            {
+                Brep[] difference = Brep.CreateBooleanDifference(tempLofts[0], cone, 0.1);
 
-      for (int i = 0; i < difference.Length; i++)
-      {
-        lofts.Add(difference[i]);
-      }
+                for (int i = 0; i < difference.Length; i++)
+                {
+                    lofts.Add(difference[i]);
+                }
+            }
 
-      if(tempLofts.Count> 0)
-      {
-        for (int i = 1; i < tempLofts.Count; i++)
-        {
-          lofts.Add(tempLofts[i]);
-        }
-      }
+            else
+            {
+                for (int i = 1; i < tempLofts.Count; i++)
+                {
+                    lofts.Add(tempLofts[i]);
+                }
+            }
+
+            // if(tempLofts.Count> 0)
+            // {
+            //   for (int i = 1; i < tempLofts.Count; i++)
+            //   {
+            //     lofts.Add(tempLofts[i]);
+            //   }
+            // }
+
+            for (int i = 0; i < lofts.Count; i++)
+            {
+
+                Transform rotate = Transform.Rotation(directionRadians, point);
+                lofts[i].Transform(rotate);
+            }
     }
 
     Cone CreateCone(Circle _bCircle, double _angle, double _toolWidth)

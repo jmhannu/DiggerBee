@@ -23,10 +23,10 @@ namespace DiggerBee
         pManager.AddNumberParameter("ToolLength", "ToolLength", "Length of milling tool", GH_ParamAccess.item);
         pManager.AddNumberParameter("MaxDepth", "MaxDepth", "MaxDepth", GH_ParamAccess.item);
 
-      // If you want to change properties of certain parameters, 
-      // you can use the pManager instance to access them by index:
-      //pManager[0].Optional = true;
-    }
+            // If you want to change properties of certain parameters, 
+            // you can use the pManager instance to access them by index:
+            //pManager[0].Optional = true;
+        }
 
     protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
      {
