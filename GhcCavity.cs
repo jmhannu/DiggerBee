@@ -9,11 +9,11 @@ namespace DiggerBee
     public class GhcCavity : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the GhcCavity class.
+        /// Initializes a new instance of the GhcCavityReworked class.
         /// </summary>
         public GhcCavity()
           : base("Cavity", "Cavity",
-              "Lofts cavity",
+              "Cavity",
               "DiggerBee", "Geometry")
         {
         }
@@ -23,19 +23,19 @@ namespace DiggerBee
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-         pManager.AddCircleParameter("Circle", "Circle", "Circle to mark cavity", GH_ParamAccess.item);
-         pManager.AddGenericParameter("Cinfo", "Cinfo", "Cinfo", GH_ParamAccess.item);
-         pManager.AddNumberParameter("Multiplicator", "Multiplicator", "Multiplicator", GH_ParamAccess.item);
-    }
+            pManager.AddCircleParameter("Circle", "Circle", "Circle to mark cavity", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Cinfo", "Cinfo", "Cinfo", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Depth", "Depth", "Depth", GH_ParamAccess.list);
+        }
 
         /// <summary>
         /// Registers all the output parameters for this component.
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-         pManager.AddBrepParameter("Cavity", "Cavity", "Cavity as Brep", GH_ParamAccess.list);
-         pManager.AddBrepParameter("Cone", "Cone", "Cone", GH_ParamAccess.item);
-    }
+            pManager.AddBrepParameter("Cavity", "Cavity", "Cavity as Brep", GH_ParamAccess.list);
+            pManager.AddBrepParameter("Cone", "Cone", "Cone", GH_ParamAccess.list);
+        }
 
         /// <summary>
         /// This is the method that actually does the work.
@@ -43,20 +43,29 @@ namespace DiggerBee
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-          Circle ci = new Circle();
-          CavityInfo cInfo = new CavityInfo();
-          double multiplicator = 0.0;
-          DA.GetData(0, ref ci);
-          DA.GetData(1, ref cInfo);
-          DA.GetData(2, ref multiplicator);
+            List<Circle> ci = new List<Circle>();
+            CavityInfo cInfo = new CavityInfo();
+            List<double> multiplicator = new List<double>();
+            DA.GetDataList(0, ci);
+            DA.GetData(1, ref cInfo);
+            DA.GetDataList(2, multiplicator);
+
+            List<Brep> cavaties = new List<Brep>();
+            List<Brep> cones = new List<Brep>();
+
+            for (int i = 0; i < ci.Count; i++)
+            {
+                Cavity c = new Cavity(ci[i], multiplicator[i], cInfo);
+
+                if(c.lofts.Count > 0) cavaties.Add(c.lofts[0]);
+                if (c.cone != null) cones.Add(c.cone);
+            }
 
 
-          Cavity c = new Cavity(ci, multiplicator, cInfo);
-
-         DA.SetDataList(0, c.lofts);
-         DA.SetData(1, c.cone);
-         // DA.SetData(1, c.mDepth);
-    }
+            DA.SetDataList(0, cavaties);
+            DA.SetDataList(1, cones);
+            // DA.SetData(1, c.mDepth);
+        }
 
         /// <summary>
         /// Provides an Icon for the component.
@@ -76,7 +85,7 @@ namespace DiggerBee
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("602172E6-C730-4D49-ACC9-D87E56DE6DB2"); }
+            get { return new Guid("E009DE70-C1A9-4D32-B1DE-789287C3C6D3"); }
         }
-  }
+    }
 }
