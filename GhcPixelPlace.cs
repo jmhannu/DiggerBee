@@ -44,7 +44,6 @@ namespace DiggerBee
         {
           pManager.AddPointParameter("Points", "Points", "Points", GH_ParamAccess.list);
           pManager.AddCircleParameter("Circles", "Circles", "Circles", GH_ParamAccess.list);
-          pManager.AddNumberParameter("Dephts", "Dephts", "Dephts", GH_ParamAccess.list);
           pManager.AddNumberParameter("Multiplicators", "Multiplicators", "Multiplicators", GH_ParamAccess.list);
           pManager.AddIntegerParameter("xResolution", "xResolution", "xResolution", GH_ParamAccess.item);
           pManager.AddIntegerParameter("yResolution", "yResolution", "yResolution", GH_ParamAccess.item);
@@ -88,13 +87,12 @@ namespace DiggerBee
 
         DA.SetDataList(0, place.points);
         DA.SetDataList(1, place.circleList);
-        DA.SetDataList(2, place.depthList);
-        DA.SetDataList(3, place.multiplicators);
-        DA.SetData(4, place.xResolution);
-        DA.SetData(5, place.yResolution);
-        DA.SetData(6, place.xSize);
-        DA.SetData(7, place.ySize);
-        DA.SetData(8, place.gridSize);
+        DA.SetDataList(2, place.multiplicators);
+        DA.SetData(3, place.xResolution);
+        DA.SetData(4, place.yResolution);
+        DA.SetData(5, place.xSize);
+        DA.SetData(6, place.ySize);
+        DA.SetData(7, place.gridSize);
     }
 
         /// <summary>

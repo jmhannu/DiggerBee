@@ -23,13 +23,13 @@ namespace DiggerBee
             circle = _circle;
             angle = Utility.ReMap(_multiplicator, 0.1, 1.0, _cInfo.Angles.Max, _cInfo.Angles.Min);
             double entrySize = Utility.ReMap(_multiplicator, 0.1, 1.0, _cInfo.ToolWidth/2, circle.Radius);
-            CavitySetup(entrySize, _cInfo.ToolWidth, _cInfo.ToolLength, _cInfo.MaxDepth);
+            CavitySetup(entrySize, _cInfo.ToolWidth, _cInfo.ToolLength, _cInfo.Depths.Max, _cInfo.Depths.Min);
         }
 
-        void CavitySetup(double _entrySize, double _toolWidth, double _toolLength, double _maxDepth)
+        void CavitySetup(double _entrySize, double _toolWidth, double _toolLength, double _maxDepth, double _minDepth)
         {
             double sLength = SideLength(angle, _toolLength);
-            double bDepth = BottomDepth(angle, sLength, _maxDepth);
+            double bDepth = BottomDepth(angle, sLength, _maxDepth, _minDepth);
 
             List<Circle> circles = CreateCircles(bDepth, _entrySize);
 
@@ -148,16 +148,21 @@ namespace DiggerBee
             return sLength;
         }
 
-        double BottomDepth(double _angle, double _sLength, double _maxDepth)
+        double BottomDepth(double _angle, double _sLength, double _maxDepth, double _minDepth)
         {
             double angleA1 = _angle;
             double angleA1radians = (Math.PI / 180) * angleA1;
 
             double sideA = Math.Sin(angleA1radians) * _sLength;
 
-            if (sideA < _maxDepth)
+            if ((sideA < _maxDepth) && (sideA > _minDepth))
             {
                 return sideA;
+            }
+
+            else if(sideA < _minDepth)
+            {
+                return _minDepth;
             }
 
             else

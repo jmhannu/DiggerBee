@@ -24,7 +24,13 @@ namespace DiggerBee
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddCircleParameter("Circle", "Circle", "Circle to mark cavity", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Depths", "Depths", "Depths", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Multiplicator", "Multiplicator", "Multiplicator", GH_ParamAccess.list);
+            pManager.AddNumberParameter("MinDepth", "MinDepth", "MinDepth", GH_ParamAccess.item);
+            pManager.AddNumberParameter("MaxDepth", "MaxDepth", "MaxDepth", GH_ParamAccess.item);
+            pManager.AddNumberParameter("ToolWidth", "ToolWidth", "Width of milling tool", GH_ParamAccess.item);
+            pManager.AddNumberParameter("ToolLength", "ToolLength", "Length of milling tool", GH_ParamAccess.item);
+
+            pManager[5].Optional = true;
         }
 
         /// <summary>
@@ -42,28 +48,38 @@ namespace DiggerBee
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<Circle> ci = new List<Circle>();
-            CavityInfo cInfo = new CavityInfo();
+            List<Circle> circles = new List<Circle>();
             List<double> multiplicator = new List<double>();
-            DA.GetDataList(0, ci);
-            DA.GetData(1, ref cInfo);
-            DA.GetDataList(2, multiplicator);
+            double minDepth = 0.0;
+            double maxDepth = 0.0;
+            double toolWidth = 0.0;
+            double toolLength = 0.0;
+
+            DA.GetDataList(0, circles);
+            DA.GetDataList(1, multiplicator);
+            DA.GetData(2, ref minDepth);
+            DA.GetData(3, ref maxDepth);
+            DA.GetData(4, ref toolWidth);
+            DA.GetData(5, ref toolLength);
 
             List<Brep> cavaties = new List<Brep>();
             List<Brep> cones = new List<Brep>();
 
-            for (int i = 0; i < ci.Count; i++)
+            CavityInfo cInfo;
+
+            if (toolLength > 0) cInfo = new CavityInfo(toolWidth, toolLength,  minDepth, maxDepth);
+            else cInfo = new CavityInfo(toolWidth, minDepth, maxDepth);
+
+            for (int i = 0; i < circles.Count; i++)
             {
-                Cavity c = new Cavity(ci[i], multiplicator[i], cInfo);
+                Cavity c = new Cavity(circles[i], multiplicator[i], cInfo);
 
                 if(c.lofts.Count > 0) cavaties.Add(c.lofts[0]);
                 if (c.cone != null) cones.Add(c.cone);
             }
 
-
             DA.SetDataList(0, cavaties);
             DA.SetDataList(1, cones);
-            // DA.SetData(1, c.mDepth);
         }
 
         /// <summary>

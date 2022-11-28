@@ -20,7 +20,6 @@ namespace DiggerBee
         public List<Point3d> points;
         public List<Vector3d> normals;
         public List<Circle> circleList;
-        public List<double> depthList;
         public List<double> multiplicators;
         public List<double> debug;
 
@@ -47,7 +46,6 @@ namespace DiggerBee
             leaveWhite = _leaveWhite;
 
             circleList = new List<Circle>();
-            depthList = new List<double>();
             multiplicators = new List<double>();
             points = new List<Point3d>();
             normals = new List<Vector3d>();
@@ -226,14 +224,12 @@ namespace DiggerBee
                         Plane plane = new Plane(point, normal);
 
                         double cSize = Utility.ReMap(c.R, colInterval.Min, colInterval.Max, sizes.Max, sizes.Min);
-                        double dSize = Utility.ReMap(c.R, colInterval.Min, colInterval.Max, 0.1, 1.0);
-                        double multiplicate = Utility.ReMap(c.R, colInterval.Min, colInterval.Max, 1.0, 0.1);
+                        double multiplicator = Utility.ReMap(c.R, colInterval.Min, colInterval.Max, 1.0, 0.1);
 
                         if (cSize > gridSize - padding) cSize = gridSize - padding;
 
                         circleList.Add(new Circle(plane, point, cSize / 2));
-                        depthList.Add(dSize);
-                        multiplicators.Add(multiplicate);
+                        multiplicators.Add(multiplicator);
                     }
                 }
             }
