@@ -23,6 +23,7 @@ namespace DiggerBee
         pManager.AddNumberParameter("ToolLength", "ToolLength", "Length of milling tool", GH_ParamAccess.item);
         pManager.AddNumberParameter("MinSize", "MinSize", "MinSize", GH_ParamAccess.item);
         pManager.AddNumberParameter("MaxSize", "MaxSize", "MaxSize", GH_ParamAccess.item);
+        pManager.AddNumberParameter("MinDepth", "MinDepth", "MinDepth", GH_ParamAccess.item);
         pManager.AddNumberParameter("MaxDepth", "MaxDepth", "MaxDepth", GH_ParamAccess.item);
 
             // If you want to change properties of certain parameters, 
@@ -47,14 +48,17 @@ namespace DiggerBee
           double toolLength = 0.0;
           double minSize = 0.0;
           double maxSize = 0.0;
+          double minDepth = 0.0;
           double maxDepth = 0.0;
+
           DA.GetData(0, ref toolWidth);
           DA.GetData(1, ref toolLength);
           DA.GetData(2, ref minSize);
           DA.GetData(3, ref maxSize);
-          DA.GetData(4, ref maxDepth);
+          DA.GetData(4, ref minDepth);
+          DA.GetData(5, ref maxDepth);
 
-            CavityInfo cInfo = new CavityInfo(toolWidth, toolLength, maxDepth, minSize, maxSize);
+          CavityInfo cInfo = new CavityInfo(toolWidth, toolLength, minDepth, maxDepth, minSize, maxSize);
 
           DA.SetData(0, cInfo.Sizes);
           DA.SetData(1, cInfo);

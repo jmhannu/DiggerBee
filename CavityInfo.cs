@@ -15,24 +15,23 @@ namespace DiggerBee
     public double MaxDepth;
 
     public Interval Sizes;
-    public Interval Entries; 
     public Interval Angles;
+    public Interval Depths; 
 
     public CavityInfo()
     { }
-    public CavityInfo(double _toolWidth, double _toolLength, double _maxDepth, double _minSize, double _maxSize)
+    public CavityInfo(double _toolWidth, double _toolLength, double _minDepth, double _maxDepth, double _minSize, double _maxSize)
     {
       ToolWidth = _toolWidth;
       ToolLength = _toolLength;
   
       MaxDepth = _maxDepth;
-
+      Depths = new Interval(_minDepth, _maxDepth);
+      
       Angles = new Interval(35, 80);
         
       if(_minSize > _toolWidth) Sizes = new Interval(_minSize, _maxSize);
       else Sizes = new Interval(_toolWidth, _maxSize);
-
-      Entries = new Interval(_toolWidth, _maxSize);
       }
   }
 }

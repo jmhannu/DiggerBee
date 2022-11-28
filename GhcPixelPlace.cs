@@ -68,17 +68,19 @@ namespace DiggerBee
          Surface surface = null;
          double padding = 0.0;
          bool distort = true;
-        double xMove = 0.0;
-        double yMove = 0.0; 
+         double xMove = 0.0;
+         double yMove = 0.0;
 
-        DA.GetData(0, ref filePath);
-        DA.GetData(1, ref surface);
-        DA.GetData(2, ref sizes);
-        DA.GetData(3, ref leaveWhite);
-        DA.GetData(4, ref padding);
-        DA.GetData(5, ref distort);
-        DA.GetData(6, ref xMove);
-        DA.GetData(7, ref yMove);
+         
+
+         DA.GetData(0, ref filePath);
+         DA.GetData(1, ref surface);
+         DA.GetData(2, ref sizes);
+         DA.GetData(3, ref leaveWhite);
+         DA.GetData(4, ref padding);
+         DA.GetData(5, ref distort);
+         DA.GetData(6, ref xMove);
+         DA.GetData(7, ref yMove);
 
 
         System.Drawing.Bitmap image = new System.Drawing.Bitmap(filePath);
@@ -88,7 +90,7 @@ namespace DiggerBee
 
         DA.SetDataList(0, place.circleList);
         DA.SetDataList(1, place.depthList);
-        //DA.SetDataList(2, debug);
+        DA.SetDataList(2, place.debug);
         DA.SetData(3, place.surfaceDomain1);
         DA.SetData(4, place.surfaceDomain1);
         DA.SetDataList(5, place.points);

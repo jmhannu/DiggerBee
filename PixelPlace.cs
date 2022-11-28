@@ -29,7 +29,8 @@ namespace DiggerBee
     public double ySize;
     public double gridSize;
 
-    bool useX; 
+    bool useX;
+        double padding; 
 
     Interval colInterval;
     Interval sizes;
@@ -37,7 +38,7 @@ namespace DiggerBee
     public List<Circle> circleList;
     public List<double> depthList;
     public List<double> multiplicators;
-    List<double> debug;
+    public List<double> debug;
 
     public PixelPlace(Surface _surface, Bitmap _image, Interval _sizes, double _padding, double _leaveWhite)
     {
@@ -46,9 +47,11 @@ namespace DiggerBee
       sizes = _sizes;
       surfaceDomain1 = surface.Domain(0);
       surfaceDomain2 = surface.Domain(1);
+            padding = _padding; 
 
       points = new List<Point3d>();
       normals = new List<Vector3d>();
+            debug = new List<double>();
 
       if(surface.IsSphere(0.1))
       {
@@ -101,12 +104,15 @@ namespace DiggerBee
 
       useX = CheckXDim(xSize, ySize);
 
-      gridSize = sizes.Max*2 + _padding;
+      gridSize = sizes.Max;
 
       xResolution = (int)(xSize / gridSize);
       yResolution = (int)(ySize / gridSize);
 
-      if (xResolution == 0) xResolution = 1;
+            debug.Add((double)xResolution);
+            debug.Add((double)yResolution);
+
+            if (xResolution == 0) xResolution = 1;
       if (yResolution == 0) yResolution = 1;
 
       image = new System.Drawing.Bitmap(_image, xResolution, yResolution);
@@ -211,7 +217,6 @@ namespace DiggerBee
 
             Point3d point = surface.PointAt(px + gridSize / 2 + _xMove, py + gridSize / 2 + _yMove);*/
 
-
             Point3d point = surface.PointAt(((x+0.5)/xResolution) + _xMove, ((y+0.5) / yResolution) + _yMove);
             points.Add(point);
 
@@ -220,12 +225,15 @@ namespace DiggerBee
 
             Plane plane = new Plane(point, normal);
 
-            double cSize = Utility.ReMap(c.R, colInterval.Min, colInterval.Max, sizes.Max, sizes.Min);
-            double dSize = Utility.ReMap(c.R, colInterval.Min, colInterval.Max, 0.1, 1.0);
+            double cSize = Utility.ReMap(c.R, colInterval.Min, colInterval.Max - _leaveWhite, sizes.Max, sizes.Min);
+            double dSize = Utility.ReMap(c.R, colInterval.Min, colInterval.Max - _leaveWhite, 0.1, 1.0);
             double multiplicate = Utility.ReMap(c.R, colInterval.Min, colInterval.Max, 1.0, 0.1);
 
             //circleList.Add(new Circle(point, cSize/2));
-            circleList.Add(new Circle(plane, point, cSize / 2));
+
+            if (cSize > gridSize - padding) cSize = gridSize - padding;
+
+            circleList.Add(new Circle(plane, point, cSize/2));
             depthList.Add(dSize);
             multiplicators.Add(multiplicate);
           }

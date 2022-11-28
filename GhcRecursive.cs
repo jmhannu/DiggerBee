@@ -62,7 +62,7 @@ namespace DiggerBee
         DA.GetData(4, ref Detailing);
 
 
-            Bitmap image = new Bitmap(ImagePath);
+        Bitmap image = new Bitmap(ImagePath);
 
             Recursion r = new Recursion(MinR, image, Rectangle, Threshold, Detailing);
 
