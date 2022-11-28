@@ -33,8 +33,8 @@ namespace DiggerBee
           pManager.AddNumberParameter("Threshold", "Threshold", "Threshold to leave white areas as solid", GH_ParamAccess.item, 0.0);
           pManager.AddNumberParameter("Padding", "Padding", "Padding", GH_ParamAccess.item, 0.0);
           pManager.AddBooleanParameter("Distort", "Distort", "Distort", GH_ParamAccess.item, true);
-          pManager.AddNumberParameter("MoveX", "MoveX", "MoveX", GH_ParamAccess.item, 0.0);
-          pManager.AddNumberParameter("MoveY", "MoveY", "MoveY", GH_ParamAccess.item, 0.0);
+          pManager.AddNumberParameter("MoveU", "MoveU", "Move placement in the U-direction on the surface. To keep placed items on the surface, a value between 0 and 1 is recommended.", GH_ParamAccess.item, 0.0);
+          pManager.AddNumberParameter("MoveV", "MoveV", "Move placement in the V-direction on the surface. To keep placed items on the surface, a value between 0 and 1 is recommended.", GH_ParamAccess.item, 0.0);
         }
 
         /// <summary>
@@ -42,19 +42,17 @@ namespace DiggerBee
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+          pManager.AddPointParameter("Points", "Points", "Points", GH_ParamAccess.list);
           pManager.AddCircleParameter("Circles", "Circles", "Circles", GH_ParamAccess.list);
           pManager.AddNumberParameter("Dephts", "Dephts", "Dephts", GH_ParamAccess.list);
-          pManager.AddNumberParameter("Debug", "Debug", "Debug", GH_ParamAccess.list);
-          pManager.AddIntervalParameter("Domain1", "Domain1", "Domain1", GH_ParamAccess.item);
-          pManager.AddIntervalParameter("Domain2", "Domain2", "Domain2", GH_ParamAccess.item);
-          pManager.AddPointParameter("Points", "Points", "Points", GH_ParamAccess.list);
+          pManager.AddNumberParameter("Multiplicators", "Multiplicators", "Multiplicators", GH_ParamAccess.list);
           pManager.AddIntegerParameter("xResolution", "xResolution", "xResolution", GH_ParamAccess.item);
           pManager.AddIntegerParameter("yResolution", "yResolution", "yResolution", GH_ParamAccess.item);
-          pManager.AddNumberParameter("Multiplicators", "Multiplicators", "Multiplicators", GH_ParamAccess.list);
-          pManager.AddNumberParameter("GridX", "GridX", "GridX", GH_ParamAccess.item);
-          pManager.AddNumberParameter("GridY", "GridY", "GridY", GH_ParamAccess.item);
+          pManager.AddNumberParameter("SizeX", "SizeX", "SizeX", GH_ParamAccess.item);
+          pManager.AddNumberParameter("SizeY", "SizeY", "SizeY", GH_ParamAccess.item);
           pManager.AddNumberParameter("GridSize", "GridSize", "GridSize", GH_ParamAccess.item);
-    }
+          pManager.AddNumberParameter("Debug", "Debug", "Debug", GH_ParamAccess.list);
+        }
 
     /// <summary>
     /// This is the method that actually does the work.
@@ -85,21 +83,18 @@ namespace DiggerBee
 
         System.Drawing.Bitmap image = new System.Drawing.Bitmap(filePath);
 
-        PixelPlace place = new PixelPlace(surface, image, sizes, padding, leaveWhite);
-        place.StraightGrid(distort, leaveWhite, xMove, yMove);
+        PixelPlace place = new PixelPlace(surface, image, sizes, padding, leaveWhite, distort);
+        place.StraightGrid(xMove, yMove);
 
-        DA.SetDataList(0, place.circleList);
-        DA.SetDataList(1, place.depthList);
-        DA.SetDataList(2, place.debug);
-        DA.SetData(3, place.surfaceDomain1);
-        DA.SetData(4, place.surfaceDomain1);
-        DA.SetDataList(5, place.points);
-        DA.SetData(6, place.xResolution);
-        DA.SetData(7, place.yResolution);
-        DA.SetDataList(8, place.multiplicators);
-        DA.SetData(9, place.xSize);
-        DA.SetData(10, place.ySize);
-        DA.SetData(11, place.gridSize);
+        DA.SetDataList(0, place.points);
+        DA.SetDataList(1, place.circleList);
+        DA.SetDataList(2, place.depthList);
+        DA.SetDataList(3, place.multiplicators);
+        DA.SetData(4, place.xResolution);
+        DA.SetData(5, place.yResolution);
+        DA.SetData(6, place.xSize);
+        DA.SetData(7, place.ySize);
+        DA.SetData(8, place.gridSize);
     }
 
         /// <summary>

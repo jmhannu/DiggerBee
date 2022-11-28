@@ -24,8 +24,7 @@ namespace DiggerBee
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddCircleParameter("Circle", "Circle", "Circle to mark cavity", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Cinfo", "Cinfo", "Cinfo", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Depth", "Depth", "Depth", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Depths", "Depths", "Depths", GH_ParamAccess.list);
         }
 
         /// <summary>
