@@ -15,6 +15,7 @@ namespace DiggerBee
   {
         public List<Rectangle3d> ListOfRectangles;
         public List<Element> ListOfElements;
+        double padding; 
         double MinWidth;
         double threshold;
         double details;
@@ -23,22 +24,26 @@ namespace DiggerBee
         Rectangle3d startRectangle;
 
         public List<string> debug;
+        public Interval minMaxSize; 
 
 
-        public Recursion(double _min, Bitmap _image, Rectangle3d _startRectangle, double _threshold, double _details)
+        public Recursion(double _min, Bitmap _image, Rectangle3d _startRectangle, double _threshold, double _details, double _padding)
         {
             ListOfRectangles = new List<Rectangle3d>();
             ListOfElements = new List<Element>();
             MinWidth = _min;
             image = _image;
             threshold = _threshold;
+            padding = _padding;
 
             startRectangle = _startRectangle;
             debug = new List<string>();
 
             //details = Remap(_details, 0.0, 1.0, 1.0, 0.0);
             details = _details;
+            minMaxSize = new Interval(double.MaxValue, 0.0);
         }
+
 
         public void Division(Element _inputElement)
         {
@@ -66,8 +71,8 @@ namespace DiggerBee
                     else newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(3), otherPoint);
                 }
 
-                int pixelU = (int)Math.Ceiling(Remap(newRectangle.Center.X, 0.0, startRectangle.Width, 0.0, image.Width));
-                int pixelV = (int)Math.Ceiling(Remap(newRectangle.Center.Y, 0.0, startRectangle.Height, image.Height, 0.0));
+                int pixelU = (int)Math.Ceiling(Utility.ReMap(newRectangle.Center.X, 0.0, startRectangle.Width, 0.0, image.Width));
+                int pixelV = (int)Math.Ceiling(Utility.ReMap(newRectangle.Center.Y, 0.0, startRectangle.Height, image.Height, 0.0));
 
                 double avg = CalculateAverage(pixelU, pixelV, newRectangle);
                 //double avg = CalculateMedian(pixelU, pixelV, newRectangle);
@@ -79,7 +84,11 @@ namespace DiggerBee
 
                 // debug.Add(avg.ToString());
 
-                Element newElement = new Element(newRectangle, avg, size);
+                Element newElement = new Element(newRectangle, avg, size, padding);
+
+                if (size < minMaxSize.T0) minMaxSize.T0 = size;
+                if (size > minMaxSize.T1) minMaxSize.T1 = size;
+
 
                 if (((size > MinWidth) && (avg < (threshold + details))) || ((size >= MinWidth) && (avg < threshold)))
                 {
@@ -93,11 +102,6 @@ namespace DiggerBee
                 }
 
             }
-        }
-
-        double Remap(double v, double low1, double high1, double low2, double high2)
-        {
-            return low2 + (v - low1) * (high2 - low2) / (high1 - low1);
         }
 
         double CalculateAverage(int _pixelU, int _pixelV, Rectangle3d _newRectangle)

@@ -229,6 +229,7 @@ namespace DiggerBee
                         if (cSize > gridSize - padding) cSize = gridSize - padding;
 
                         circleList.Add(new Circle(plane, point, cSize / 2));
+                        //circleList.Add(new Circle(plane, point, cSize));
                         multiplicators.Add(multiplicator);
                     }
                 }
