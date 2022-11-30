@@ -15,32 +15,36 @@ namespace DiggerBee
   {
         public List<Rectangle3d> ListOfRectangles;
         public List<Element> ListOfElements;
-        double padding; 
+        double padding;
         double MinWidth;
+        double MaxWidth;
         double threshold;
-        double details;
         Bitmap image;
 
         Rectangle3d startRectangle;
 
         public List<string> debug;
-        public Interval minMaxSize; 
+        public Interval minMaxSize;
+
+        bool divBlack;
+        bool excludeWhite;
 
 
-        public Recursion(double _min, Bitmap _image, Rectangle3d _startRectangle, double _threshold, double _details, double _padding)
+        public Recursion(double _min, double _max, Bitmap _image, Rectangle3d _startRectangle, double _threshold, double _padding, bool _divBlack, bool _exWhite)
         {
-            ListOfRectangles = new List<Rectangle3d>();
-            ListOfElements = new List<Element>();
             MinWidth = _min;
+            MaxWidth = _max;
             image = _image;
             threshold = _threshold;
             padding = _padding;
-
             startRectangle = _startRectangle;
+            divBlack = _divBlack;
+            excludeWhite = _exWhite;
+
+            ListOfRectangles = new List<Rectangle3d>();
+            ListOfElements = new List<Element>();
             debug = new List<string>();
 
-            //details = Remap(_details, 0.0, 1.0, 1.0, 0.0);
-            details = _details;
             minMaxSize = new Interval(double.MaxValue, 0.0);
         }
 
@@ -79,28 +83,94 @@ namespace DiggerBee
 
                 double size;
 
-                if (newRectangle.Width <= newRectangle.Height) size = newRectangle.Width;
-                else size = newRectangle.Height;
+                if (newRectangle.Width <= newRectangle.Height) size = newRectangle.Width - padding;
+                else size = newRectangle.Height - padding;
 
                 // debug.Add(avg.ToString());
 
-                Element newElement = new Element(newRectangle, avg, size, padding);
-
-                if (size < minMaxSize.T0) minMaxSize.T0 = size;
-                if (size > minMaxSize.T1) minMaxSize.T1 = size;
+                Element newElement = new Element(newRectangle, avg, size);
 
 
-                if (((size > MinWidth) && (avg < (threshold + details))) || ((size >= MinWidth) && (avg < threshold)))
+
+
+                if (divBlack)
                 {
-                    Division(newElement);
+                    if (excludeWhite)
+                    {
+                        if ((size > MinWidth) && (avg < threshold))
+                        {
+                            Division(newElement);
+                        }
+
+                        else
+                        {
+                            ListOfRectangles.Add(newRectangle);
+
+                            if (size <= MaxWidth)
+                            {
+                                ListOfElements.Add(newElement);
+                                if (size < minMaxSize.T0) minMaxSize.T0 = size;
+                                if (size > minMaxSize.T1) minMaxSize.T1 = size;
+                            }
+                        }
+
+                    }
+
+                    else
+                    {
+                        if (((size > MinWidth) && (avg < threshold)) || (size > MaxWidth))
+                        {
+                            Division(newElement);
+                        }
+
+                        else
+                        {
+                            ListOfRectangles.Add(newRectangle);
+                            ListOfElements.Add(newElement);
+                            if (size < minMaxSize.T0) minMaxSize.T0 = size;
+                            if (size > minMaxSize.T1) minMaxSize.T1 = size;
+                        }
+                    }
                 }
+
 
                 else
                 {
-                    ListOfRectangles.Add(newRectangle);
-                    ListOfElements.Add(newElement);
-                }
+                    if (excludeWhite)
+                    {
+                        if ((size > MinWidth) && (avg > threshold))
+                        {
+                            Division(newElement);
+                        }
 
+                        else
+                        {
+                            ListOfRectangles.Add(newRectangle);
+                            if (size <= MaxWidth)
+                            {
+                                ListOfElements.Add(newElement);
+                                if (size < minMaxSize.T0) minMaxSize.T0 = size;
+                                if (size > minMaxSize.T1) minMaxSize.T1 = size;
+                            }
+                        }
+                    }
+
+                    else
+                    {
+                        if (((size > MinWidth) && (avg > threshold)) || (size > MaxWidth))
+                        {
+                            Division(newElement);
+                        }
+
+                        else
+                        {
+                            ListOfRectangles.Add(newRectangle);
+                            ListOfElements.Add(newElement);
+                            if (size < minMaxSize.T0) minMaxSize.T0 = size;
+                            if (size > minMaxSize.T1) minMaxSize.T1 = size;
+                        }
+                    }
+                }
             }
         }
 
@@ -111,14 +181,9 @@ namespace DiggerBee
             int pixelCountU = (int)Math.Floor(image.Width * (_newRectangle.Width / startRectangle.Width));
             int pixelCountV = (int)Math.Floor(image.Height * (_newRectangle.Height / startRectangle.Height));
 
-            //debug.Add(pixelU.ToString());
-            //debug.Add(pixelCountU.ToString());
 
             int lowerU = (int)Math.Floor(-pixelCountU / 2.0);
             int upperU = (int)Math.Floor(pixelCountU / 2.0);
-            // debug.Add(lowerU.ToString());
-            // debug.Add(upperU.ToString());
-            // debug.Add(image.Width.ToString());
 
             int lowerV = (int)Math.Floor(-pixelCountV / 2.0);
             int upperV = (int)Math.Floor(pixelCountV / 2.0);
@@ -129,10 +194,7 @@ namespace DiggerBee
                 {
                     Color pixelC = image.GetPixel(_pixelU + x, _pixelV + y);
                     //average = average + (((pixelC.R + pixelC.G + pixelC.B) / 3.0) / 255);
-                    average = average + (((pixelC.R + pixelC.G + pixelC.B) / 3.0));
-                    //debug.Add(pixelC.R.ToString());
-                    //debug.Add(pixelC.G.ToString());
-                    //debug.Add(pixelC.B.ToString());
+                    average += ((pixelC.R + pixelC.G + pixelC.B) / 3.0);
                 }
             }
 

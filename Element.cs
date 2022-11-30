@@ -19,7 +19,7 @@ namespace DiggerBee
         public Point3d center;
         public double size;
 
-        public Element(Rectangle3d _rectangle, double _avg, double _size, double _padding)
+        public Element(Rectangle3d _rectangle, double _avg, double _size)
         {
             rectangle = _rectangle;
             last = false;
@@ -27,7 +27,6 @@ namespace DiggerBee
             center = _rectangle.Center;
             size = _size;
 
-            circle = new Circle(center, Math.Abs(_size / 2) - _padding);
+            circle = new Circle(_rectangle.Plane, center, Math.Abs(_size / 2));
         }
     }
-}
