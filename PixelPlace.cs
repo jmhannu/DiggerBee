@@ -107,16 +107,17 @@ namespace DiggerBee
             {
                 if (xSize < ySize)
                 {
-                    xResolution = (int)(xSize / gridSize);
+                    //xResolution = (int)(xSize / gridSize); Floor
+                    xResolution = Convert.ToInt32(xSize / gridSize);
                     double divFactor = _image.Width / _image.Height;
-                    yResolution = (int)(xResolution / divFactor);
+                    yResolution = Convert.ToInt32(xResolution / divFactor);
                 }
 
                 else
                 {
-                    yResolution = (int)(ySize / gridSize);
+                    yResolution = Convert.ToInt32(ySize / gridSize);
                     double divFactor = _image.Height / _image.Width;
-                    xResolution = (int)(yResolution / divFactor);
+                    xResolution = Convert.ToInt32(yResolution / divFactor);
                 }
             }
 
@@ -228,8 +229,7 @@ namespace DiggerBee
 
                         if (cSize > gridSize - padding) cSize = gridSize - padding;
 
-                        circleList.Add(new Circle(plane, point, cSize / 2));
-                        //circleList.Add(new Circle(plane, point, cSize));
+                        circleList.Add(new Circle(plane, point, cSize));
                         multiplicators.Add(multiplicator);
                     }
                 }

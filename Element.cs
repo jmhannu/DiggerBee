@@ -10,8 +10,8 @@ using Rhino.Geometry;
 
 namespace DiggerBee
 {
-  class Element
-  {
+    class Element
+    {
         public Rectangle3d rectangle;
         public Circle circle;
         public bool last;
@@ -30,3 +30,4 @@ namespace DiggerBee
             circle = new Circle(_rectangle.Plane, center, Math.Abs(_size / 2));
         }
     }
+}

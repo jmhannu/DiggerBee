@@ -4,8 +4,9 @@ using System.Collections.Generic;
 
 using Grasshopper;
 using Grasshopper.Kernel;
-using Grasshopper.Kernel.Data; 
+using Grasshopper.Kernel.Data;
 using Rhino.Geometry;
+
 
 namespace DiggerBee
 {

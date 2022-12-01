@@ -27,10 +27,9 @@ namespace DiggerBee
         public Interval minMaxSize;
 
         bool divBlack;
-        bool excludeWhite;
+        double exclude;
 
-
-        public Recursion(double _min, double _max, Bitmap _image, Rectangle3d _startRectangle, double _threshold, double _padding, bool _divBlack, bool _exWhite)
+        public Recursion(double _min, double _max, Bitmap _image, Rectangle3d _startRectangle, double _threshold, double _padding, bool _divBlack, double _exclude)
         {
             MinWidth = _min;
             MaxWidth = _max;
@@ -39,7 +38,7 @@ namespace DiggerBee
             padding = _padding;
             startRectangle = _startRectangle;
             divBlack = _divBlack;
-            excludeWhite = _exWhite;
+            exclude = _exclude;
 
             ListOfRectangles = new List<Rectangle3d>();
             ListOfElements = new List<Element>();
@@ -49,31 +48,48 @@ namespace DiggerBee
         }
 
 
-        public void Division(Element _inputElement)
+        public void Division(Element _inputElement, bool _div4)
         {
             Rectangle3d inputRectangle = _inputElement.rectangle;
 
             Plane rectanglePlane = inputRectangle.Plane;
 
-            for (int i = 0; i < 2; i++)
+            int loop;
+            if (_div4) loop = 4;
+            else loop = 2;
+
+            for (int i = 0; i < loop; i++)
             {
                 Rectangle3d newRectangle;
-                if (inputRectangle.Width >= inputRectangle.Height)
-                {
-                    Point3d otherPoint = new Point3d(inputRectangle.Center.X, inputRectangle.Corner(3).Y, inputRectangle.Center.Z);
 
-                    if (i == 0) newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(0), otherPoint);
-                    else newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(1), otherPoint);
+                if (!_div4)
+                {
+                    if (inputRectangle.Width >= inputRectangle.Height)
+                    {
+                        Point3d otherPoint = new Point3d(inputRectangle.Center.X, inputRectangle.Corner(3).Y, inputRectangle.Center.Z);
+
+                        if (i == 0) newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(0), otherPoint);
+                        else newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(1), otherPoint);
+                    }
+
+                    else
+                    {
+
+                        Point3d otherPoint = new Point3d(inputRectangle.Corner(1).X, inputRectangle.Center.Y, inputRectangle.Center.Z);
+
+                        if (i == 0) newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(0), otherPoint);
+                        else newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(3), otherPoint);
+                    }
                 }
 
                 else
                 {
-
-                    Point3d otherPoint = new Point3d(inputRectangle.Corner(1).X, inputRectangle.Center.Y, inputRectangle.Center.Z);
-
-                    if (i == 0) newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(0), otherPoint);
-                    else newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(3), otherPoint);
+                    if (i == 0) newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(0), inputRectangle.Center);
+                    else if (i == 1) newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(1), inputRectangle.Center);
+                    else if (i == 2) newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(2), inputRectangle.Center);
+                    else newRectangle = new Rectangle3d(rectanglePlane, inputRectangle.Corner(3), inputRectangle.Center);
                 }
+
 
                 int pixelU = (int)Math.Ceiling(Utility.ReMap(newRectangle.Center.X, 0.0, startRectangle.Width, 0.0, image.Width));
                 int pixelV = (int)Math.Ceiling(Utility.ReMap(newRectangle.Center.Y, 0.0, startRectangle.Height, image.Height, 0.0));
@@ -90,85 +106,40 @@ namespace DiggerBee
 
                 Element newElement = new Element(newRectangle, avg, size);
 
-
-
-
                 if (divBlack)
                 {
-                    if (excludeWhite)
+                    if (((size > MinWidth) && (avg < threshold)) || (size > MaxWidth))
+                    //if (((size > MinWidth) && (avg < threshold)))
                     {
-                        if ((size > MinWidth) && (avg < threshold))
-                        {
-                            Division(newElement);
-                        }
-
-                        else
-                        {
-                            ListOfRectangles.Add(newRectangle);
-
-                            if (size <= MaxWidth)
-                            {
-                                ListOfElements.Add(newElement);
-                                if (size < minMaxSize.T0) minMaxSize.T0 = size;
-                                if (size > minMaxSize.T1) minMaxSize.T1 = size;
-                            }
-                        }
-
+                        Division(newElement, _div4);
                     }
 
                     else
                     {
-                        if (((size > MinWidth) && (avg < threshold)) || (size > MaxWidth))
-                        {
-                            Division(newElement);
-                        }
-
-                        else
-                        {
-                            ListOfRectangles.Add(newRectangle);
-                            ListOfElements.Add(newElement);
-                            if (size < minMaxSize.T0) minMaxSize.T0 = size;
-                            if (size > minMaxSize.T1) minMaxSize.T1 = size;
-                        }
+                        ListOfRectangles.Add(newRectangle);
+                        //if(size <= MaxWidth)
+                        // {
+                        if (avg <= (255 - exclude)) ListOfElements.Add(newElement);
+                        if (size < minMaxSize.T0) minMaxSize.T0 = size;
+                        if (size > minMaxSize.T1) minMaxSize.T1 = size;
+                        //  }
                     }
                 }
 
 
                 else
                 {
-                    if (excludeWhite)
+                    if (((size > MinWidth) && (avg > threshold)) || (size > MaxWidth))
                     {
-                        if ((size > MinWidth) && (avg > threshold))
-                        {
-                            Division(newElement);
-                        }
-
-                        else
-                        {
-                            ListOfRectangles.Add(newRectangle);
-                            if (size <= MaxWidth)
-                            {
-                                ListOfElements.Add(newElement);
-                                if (size < minMaxSize.T0) minMaxSize.T0 = size;
-                                if (size > minMaxSize.T1) minMaxSize.T1 = size;
-                            }
-                        }
+                        Division(newElement, _div4);
                     }
 
                     else
                     {
-                        if (((size > MinWidth) && (avg > threshold)) || (size > MaxWidth))
-                        {
-                            Division(newElement);
-                        }
-
-                        else
-                        {
-                            ListOfRectangles.Add(newRectangle);
-                            ListOfElements.Add(newElement);
-                            if (size < minMaxSize.T0) minMaxSize.T0 = size;
-                            if (size > minMaxSize.T1) minMaxSize.T1 = size;
-                        }
+                        ListOfRectangles.Add(newRectangle);
+                        if (avg <= (255 - exclude)) ListOfElements.Add(newElement);
+                        if (size < minMaxSize.T0) minMaxSize.T0 = size;
+                        if (size > minMaxSize.T1) minMaxSize.T1 = size;
                     }
                 }
             }
