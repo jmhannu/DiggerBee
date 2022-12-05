@@ -13,25 +13,35 @@ namespace DiggerBee
         public List<Brep> lofts;
         public Brep cone;
 
-        Circle circle; 
+        Circle circle;
 
-        public double angle;
+        public double multiplicator;
 
-        public Cavity(Circle _circle, double _multiplicator, CavityInfo _cInfo)
+
+        public Cavity(Circle _circle, double _multiplicator, bool _multiplyDepth, CavityInfo _cInfo, double _entry)
         {
             lofts = new List<Brep>();
             circle = _circle;
-            angle = Utility.ReMap(_multiplicator, 0.1, 1.0, _cInfo.Angles.Max, _cInfo.Angles.Min);
-            double entrySize = Utility.ReMap(_multiplicator, 0.1, 1.0, _cInfo.ToolWidth/2, circle.Radius);
-            CavitySetup(entrySize, _cInfo.ToolWidth, _cInfo.ToolLength, _cInfo.Depths.Max, _cInfo.Depths.Min);
+            multiplicator = _multiplicator;
+            //angle = Utility.ReMap(_multiplicator, 0.1, 1.0, _cInfo.Angles.Max, _cInfo.Angles.Min);
+            //double entrySize = Utility.ReMap(_multiplicator, 0.1, 1.0, _cInfo.ToolWidth / 2, circle.Radius);
+            CavitySetup(_cInfo.ToolWidth, _cInfo.ToolLength, _cInfo.Depths, multiplicator, _multiplyDepth, _entry);
         }
 
-        void CavitySetup(double _entrySize, double _toolWidth, double _toolLength, double _maxDepth, double _minDepth)
+        void CavitySetup(double _toolWidth, double _toolLength, Interval _depths, double _multiplicator, bool _multiplyDepth, double _entry)
         {
-            double sLength = SideLength(angle, _toolLength);
-            double bDepth = BottomDepth(angle, sLength, _maxDepth, _minDepth);
+            //double bDepth = BottomDepth(angle, sLength, _maxDepth, _minDepth);
+            double bDepth;
 
-            List<Circle> circles = CreateCircles(bDepth, _entrySize);
+            if (_multiplyDepth) bDepth = Utility.ReMap(_multiplicator, 0.1, 1.0, _depths.T0, _depths.T1);
+            else bDepth = Utility.ReMap(_multiplicator, 0.1, 1.0, _depths.T1, _depths.T0);
+
+            //double sLength = SideLength(angle, _toolLength);
+
+            double entrySize = circle.Radius / 2;
+            double entryDepth = bDepth * _entry;
+
+            List<Circle> circles = CreateCircles(bDepth, entrySize, entryDepth);
 
             List<Curve> circlesAsCrv = new List<Curve>();
             for (int i = 0; i < circles.Count; i++)
@@ -42,50 +52,65 @@ namespace DiggerBee
             List<Brep> tempLofts = CreateLoft(circlesAsCrv);
 
             Circle bCircle = circles[circles.Count - 1];
-            Cone smallShape = CreateCone(bCircle.Radius - _toolWidth, (bDepth/2) - _toolWidth, bCircle);
-            
-            cone = Brep.CreateFromCone(smallShape, true);
 
-            if ((cone != null) && (tempLofts.Count > 0))
-            {
-                Brep[] difference = Brep.CreateBooleanDifference(tempLofts[0], cone, 0.1);
+            double coneRadius = bCircle.Radius - _toolWidth;
 
-                for (int i = 0; i < difference.Length; i++)
-                {
-                   lofts.Add(difference[i]);
-                }
-             }
+            double angle = Math.Atan((bDepth - entryDepth) / ((bCircle.Diameter - entrySize) / 2));
+            double coneHeight = Math.Tan(angle) * coneRadius;
 
-            else
-            {
-                lofts = tempLofts;
-            }
+            //Cone smallShape = CreateCone(coneRadius, coneHeight, bCircle);
+
+            cone = CreateCone(coneRadius, coneHeight, bCircle);
+            //cone = Brep.CreateFromCone(smallShape, true);
+
+            // if ((cone != null) && (tempLofts.Count > 0))
+            // {
+            //Brep[] difference = Brep.CreateBooleanDifference(tempLofts[0], cone, 0.1);
+
+            //for (int i = 0; i < difference.Length; i++)
+            //{
+            //lofts.Add(difference[i]);
+            //}
+            // }
+
+            //  else
+            // {
+            lofts = tempLofts;
+            //}
 
         }
 
-        Cone CreateCone(double _coneRadius, double _coneHeight, Circle _bCircle)
-        {            
+        Brep CreateCone(double _coneRadius, double _coneHeight, Circle _bCircle)
+        {
             Point3d tipPoint = _bCircle.Center;
             Vector3d movePoint = _bCircle.Normal;
             movePoint.Unitize();
             movePoint.Reverse();
-            movePoint *= _coneHeight;
-            Transform move3 = Transform.Translation(movePoint);
-            tipPoint.Transform(move3);
+            movePoint *= (_coneHeight - 0.00);
+            Transform move = Transform.Translation(movePoint);
+            tipPoint.Transform(move);
 
             Plane smallTipPlane = new Plane(tipPoint, _bCircle.Normal);
             Cone smallShape = new Cone(smallTipPlane, _coneHeight, _coneRadius);
-            return smallShape;
+
+            //Vector3d toBottom = _bCircle.Center - smallShape.BasePoint;
+
+            Brep brep = Brep.CreateFromCone(smallShape, true);
+
+            // Transform secondMove = Transform.Translation(toBottom);
+            // brep.Transform(secondMove);
+
+            return brep;
         }
 
-        List<Circle> CreateCircles(double _bDepth, double _entrySize)
+        List<Circle> CreateCircles(double _bDepth, double _entrySize, double _entryDepth)
         {
             Circle upperCirle = circle;
 
             Circle entryCircle = new Circle(circle.Plane, _entrySize);
             Vector3d moveVector = circle.Normal;
             moveVector.Unitize();
-            moveVector *= (_bDepth / 2);
+            moveVector *= _entryDepth;
             Transform move = Transform.Translation(moveVector);
             entryCircle.Transform(move);
 
@@ -97,8 +122,8 @@ namespace DiggerBee
             bottomCircle.Transform(move2);
 
             List<Circle> circles = new List<Circle> { upperCirle, entryCircle, bottomCircle };
-   
-            return circles; 
+
+            return circles;
         }
 
 
@@ -160,7 +185,7 @@ namespace DiggerBee
                 return sideA;
             }
 
-            else if(sideA < _minDepth)
+            else if (sideA < _minDepth)
             {
                 return _minDepth;
             }

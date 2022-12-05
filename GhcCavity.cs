@@ -24,13 +24,14 @@ namespace DiggerBee
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddCircleParameter("Circle", "Circle", "Circle to mark cavity", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Multiplicator", "Multiplicator", "Multiplicator", GH_ParamAccess.list);
-            pManager.AddNumberParameter("MinDepth", "MinDepth", "MinDepth", GH_ParamAccess.item);
-            pManager.AddNumberParameter("MaxDepth", "MaxDepth", "MaxDepth", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Multiplicators", "Multiplicators", "Multiplicators", GH_ParamAccess.list);
+            pManager.AddIntervalParameter("DepthInterval", "Depths", "Depth Interval", GH_ParamAccess.item);
+            pManager.AddBooleanParameter("MultiplyDepths", "MultiplyDepths", "If true, multiplicators at 1.0 is translated to max depths. If false, this is inverted.", GH_ParamAccess.item, true);
+            pManager.AddNumberParameter("EntryDepth", "Entry", "Entry depth, a number between 0.0 and 1.0", GH_ParamAccess.item);
             pManager.AddNumberParameter("ToolWidth", "ToolWidth", "Width of milling tool", GH_ParamAccess.item);
             pManager.AddNumberParameter("ToolLength", "ToolLength", "Length of milling tool", GH_ParamAccess.item);
 
-            pManager[5].Optional = true;
+            pManager[6].Optional = true;
         }
 
         /// <summary>
@@ -49,32 +50,34 @@ namespace DiggerBee
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<Circle> circles = new List<Circle>();
-            List<double> multiplicator = new List<double>();
-            double minDepth = 0.0;
-            double maxDepth = 0.0;
+            List<double> multiplicators = new List<double>();
+            Interval depths = new Interval();
+            bool multiplyDepths = true; 
+            double entry = 0.0; 
             double toolWidth = 0.0;
             double toolLength = 0.0;
 
             DA.GetDataList(0, circles);
-            DA.GetDataList(1, multiplicator);
-            DA.GetData(2, ref minDepth);
-            DA.GetData(3, ref maxDepth);
-            DA.GetData(4, ref toolWidth);
-            DA.GetData(5, ref toolLength);
+            DA.GetDataList(1, multiplicators);
+            DA.GetData(2, ref depths);
+            DA.GetData(3, ref multiplyDepths);
+            DA.GetData(4, ref entry);
+            DA.GetData(5, ref toolWidth);
+            DA.GetData(6, ref toolLength);
 
             List<Brep> cavaties = new List<Brep>();
             List<Brep> cones = new List<Brep>();
 
             CavityInfo cInfo;
 
-            if (toolLength > 0) cInfo = new CavityInfo(toolWidth, toolLength,  minDepth, maxDepth);
-            else cInfo = new CavityInfo(toolWidth, minDepth, maxDepth);
+            if (toolLength > 0) cInfo = new CavityInfo(toolWidth, toolLength, depths.T0, depths.T1);
+            else cInfo = new CavityInfo(toolWidth, depths.T0, depths.T1);
 
             for (int i = 0; i < circles.Count; i++)
             {
-                Cavity c = new Cavity(circles[i], multiplicator[i], cInfo);
+                Cavity c = new Cavity(circles[i], multiplicators[i], multiplyDepths, cInfo, entry);
 
-                if(c.lofts.Count > 0) cavaties.Add(c.lofts[0]);
+                if (c.lofts.Count > 0) cavaties.Add(c.lofts[0]);
                 if (c.cone != null) cones.Add(c.cone);
             }
 
