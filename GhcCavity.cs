@@ -24,10 +24,10 @@ namespace DiggerBee
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddCircleParameter("Circle", "Circle", "Circle to mark cavity", GH_ParamAccess.list);
+            pManager.AddIntervalParameter("DepthInterval", "DepthInterval", "Depth Interval", GH_ParamAccess.item);
             pManager.AddNumberParameter("Multiplicators", "Multiplicators", "Multiplicators", GH_ParamAccess.list);
-            pManager.AddIntervalParameter("DepthInterval", "Depths", "Depth Interval", GH_ParamAccess.item);
-            pManager.AddBooleanParameter("MultiplyDepths", "MultiplyDepths", "If true, multiplicators at 1.0 is translated to max depths. If false, this is inverted.", GH_ParamAccess.item, true);
-            pManager.AddNumberParameter("EntryDepth", "Entry", "Entry depth, a number between 0.0 and 1.0", GH_ParamAccess.item);
+            pManager.AddBooleanParameter("LowToHigh", "LowToHigh", "If true, multiplicators at 1.0 is translated to max depths. If false, this is inverted.", GH_ParamAccess.item, true);
+            pManager.AddNumberParameter("EntryDepth", "Entry", "Depth of the entry in relation to the depth. A number between 0.0 and 1.0 where 0.0 means the entry is not inserted", GH_ParamAccess.item);
             pManager.AddNumberParameter("ToolWidth", "ToolWidth", "Width of milling tool", GH_ParamAccess.item);
             pManager.AddNumberParameter("ToolLength", "ToolLength", "Length of milling tool", GH_ParamAccess.item);
 
@@ -58,15 +58,14 @@ namespace DiggerBee
             double toolLength = 0.0;
 
             DA.GetDataList(0, circles);
-            DA.GetDataList(1, multiplicators);
-            DA.GetData(2, ref depths);
+            DA.GetData(1, ref depths);
+            DA.GetDataList(2, multiplicators);
             DA.GetData(3, ref multiplyDepths);
             DA.GetData(4, ref entry);
             DA.GetData(5, ref toolWidth);
             DA.GetData(6, ref toolLength);
 
             List<Brep> cavaties = new List<Brep>();
-            List<Brep> cones = new List<Brep>();
 
             CavityInfo cInfo;
 
@@ -77,12 +76,13 @@ namespace DiggerBee
             {
                 Cavity c = new Cavity(circles[i], multiplicators[i], multiplyDepths, cInfo, entry);
 
-                if (c.lofts.Count > 0) cavaties.Add(c.lofts[0]);
-                if (c.cone != null) cones.Add(c.cone);
+                for (int j = 0; j < c.lofts.Count; j++)
+                {
+                    cavaties.Add(c.lofts[j]);
+                }
             }
 
             DA.SetDataList(0, cavaties);
-            DA.SetDataList(1, cones);
         }
 
         /// <summary>

@@ -11,10 +11,7 @@ namespace DiggerBee
     class Cavity
     {
         public List<Brep> lofts;
-        public Brep cone;
-
         Circle circle;
-
         public double multiplicator;
 
 
@@ -23,23 +20,19 @@ namespace DiggerBee
             lofts = new List<Brep>();
             circle = _circle;
             multiplicator = _multiplicator;
-            //angle = Utility.ReMap(_multiplicator, 0.1, 1.0, _cInfo.Angles.Max, _cInfo.Angles.Min);
-            //double entrySize = Utility.ReMap(_multiplicator, 0.1, 1.0, _cInfo.ToolWidth / 2, circle.Radius);
             CavitySetup(_cInfo.ToolWidth, _cInfo.ToolLength, _cInfo.Depths, multiplicator, _multiplyDepth, _entry);
         }
 
         void CavitySetup(double _toolWidth, double _toolLength, Interval _depths, double _multiplicator, bool _multiplyDepth, double _entry)
         {
-            //double bDepth = BottomDepth(angle, sLength, _maxDepth, _minDepth);
             double bDepth;
 
             if (_multiplyDepth) bDepth = Utility.ReMap(_multiplicator, 0.1, 1.0, _depths.T0, _depths.T1);
             else bDepth = Utility.ReMap(_multiplicator, 0.1, 1.0, _depths.T1, _depths.T0);
 
-            //double sLength = SideLength(angle, _toolLength);
-
             double entrySize = circle.Radius / 2;
             double entryDepth = bDepth * _entry;
+            if (entryDepth > bDepth - 0.1) entryDepth = bDepth - 0.1; 
 
             List<Circle> circles = CreateCircles(bDepth, entrySize, entryDepth);
 
@@ -49,58 +42,70 @@ namespace DiggerBee
                 circlesAsCrv.Add(circles[i].ToNurbsCurve());
             }
 
-            List<Brep> tempLofts = CreateLoft(circlesAsCrv);
+            Brep[] tempBreps = Brep.CreateFromLoft(circlesAsCrv, Point3d.Unset, Point3d.Unset, LoftType.Straight, false);
+
 
             Circle bCircle = circles[circles.Count - 1];
 
             double coneRadius = bCircle.Radius - _toolWidth;
 
-            double angle = Math.Atan((bDepth - entryDepth) / ((bCircle.Diameter - entrySize) / 2));
+            double angle = Math.Atan((bDepth - entryDepth) / ((bCircle.Diameter - entrySize) / 3));
             double coneHeight = Math.Tan(angle) * coneRadius;
 
-            //Cone smallShape = CreateCone(coneRadius, coneHeight, bCircle);
+            Circle coneCircle = new Circle(bCircle.Plane, coneRadius);
+            Curve coneCurve = coneCircle.ToNurbsCurve();
 
-            cone = CreateCone(coneRadius, coneHeight, bCircle);
-            //cone = Brep.CreateFromCone(smallShape, true);
+            List<Curve> bottomLoft = new List<Curve>();
+            bottomLoft.Add(coneCurve);
+            bottomLoft.Add(circlesAsCrv[circlesAsCrv.Count - 1]);
+            Brep[] secondTemp = Brep.CreateFromLoft(bottomLoft, Point3d.Unset, Point3d.Unset, LoftType.Straight, false);
 
-            // if ((cone != null) && (tempLofts.Count > 0))
-            // {
-            //Brep[] difference = Brep.CreateBooleanDifference(tempLofts[0], cone, 0.1);
+            for (int i = 0; i < tempBreps.Length; i++)
+            {
+                lofts.Add(tempBreps[i]);
+            }
 
-            //for (int i = 0; i < difference.Length; i++)
-            //{
-            //lofts.Add(difference[i]);
-            //}
-            // }
+            for (int i = 0; i < secondTemp.Length; i++)
+            {
+                lofts.Add(secondTemp[i]);
+            }
 
-            //  else
-            // {
-            lofts = tempLofts;
-            //}
 
+            Cone tempCone = CreateCone(coneRadius, coneHeight, bCircle);
+
+            Point3d conePoint = tempCone.BasePoint;
+            Point3d circlePoint = circles[circles.Count - 1].Center;
+
+            Vector3d mVector = circlePoint - conePoint;
+            Brep cone = Brep.CreateFromCone(tempCone, false);
+            cone.Translate(mVector);
+
+            lofts.Add(cone);
+
+            Brep[] joinedBreps = Brep.JoinBreps(lofts, 0.1);
+
+            lofts.Clear();
+
+            for (int i = 0; i < joinedBreps.Length; i++)
+            {
+                lofts.Add(joinedBreps[i]);
+            }
         }
 
-        Brep CreateCone(double _coneRadius, double _coneHeight, Circle _bCircle)
+        Cone CreateCone(double _coneRadius, double _coneHeight, Circle _bCircle)
         {
             Point3d tipPoint = _bCircle.Center;
             Vector3d movePoint = _bCircle.Normal;
             movePoint.Unitize();
             movePoint.Reverse();
-            movePoint *= (_coneHeight - 0.00);
+            movePoint *= _coneHeight + 1.0;
             Transform move = Transform.Translation(movePoint);
             tipPoint.Transform(move);
 
             Plane smallTipPlane = new Plane(tipPoint, _bCircle.Normal);
             Cone smallShape = new Cone(smallTipPlane, _coneHeight, _coneRadius);
 
-            //Vector3d toBottom = _bCircle.Center - smallShape.BasePoint;
-
-            Brep brep = Brep.CreateFromCone(smallShape, true);
-
-            // Transform secondMove = Transform.Translation(toBottom);
-            // brep.Transform(secondMove);
-
-            return brep;
+            return smallShape;
         }
 
         List<Circle> CreateCircles(double _bDepth, double _entrySize, double _entryDepth)
