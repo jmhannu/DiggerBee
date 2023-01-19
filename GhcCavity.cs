@@ -23,11 +23,11 @@ namespace DiggerBee
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddCircleParameter("Circle", "Circle", "Circle to mark cavity", GH_ParamAccess.list);
+            pManager.AddCircleParameter("Circles", "Circles", "Circles where cavities should be placed.", GH_ParamAccess.list);
             pManager.AddIntervalParameter("DepthInterval", "DepthInterval", "Depth Interval", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Multiplicators", "Multiplicators", "Multiplicators", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Multiplicators", "Multiplicators", "List of multiplication numbers. One number for each cavity.", GH_ParamAccess.list);
             pManager.AddBooleanParameter("LowToHigh", "LowToHigh", "If true, multiplicators at 1.0 is translated to max depths. If false, this is inverted.", GH_ParamAccess.item, true);
-            pManager.AddNumberParameter("EntryDepth", "Entry", "Depth of the entry in relation to the depth. A number between 0.0 and 1.0 where 0.0 means the entry is not inserted", GH_ParamAccess.item);
+            pManager.AddNumberParameter("EntryDepths", "Entry", "List of numbers between 0.0 and 1.0 where 0.0 means the entry is not inserted. One number for each cavity", GH_ParamAccess.list);
             pManager.AddNumberParameter("ToolWidth", "ToolWidth", "Width of milling tool", GH_ParamAccess.item);
             pManager.AddNumberParameter("ToolLength", "ToolLength", "Length of milling tool", GH_ParamAccess.item);
 
@@ -39,8 +39,8 @@ namespace DiggerBee
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+            pManager.AddTextParameter("Debug", "Debug", "Debug", GH_ParamAccess.list);
             pManager.AddBrepParameter("Cavity", "Cavity", "Cavity as Brep", GH_ParamAccess.list);
-            pManager.AddBrepParameter("Cone", "Cone", "Cone", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -52,8 +52,8 @@ namespace DiggerBee
             List<Circle> circles = new List<Circle>();
             List<double> multiplicators = new List<double>();
             Interval depths = new Interval();
-            bool multiplyDepths = true; 
-            double entry = 0.0; 
+            bool multiplyDepths = true;
+            List<double> entries = new List<double>();
             double toolWidth = 0.0;
             double toolLength = 0.0;
 
@@ -61,28 +61,43 @@ namespace DiggerBee
             DA.GetData(1, ref depths);
             DA.GetDataList(2, multiplicators);
             DA.GetData(3, ref multiplyDepths);
-            DA.GetData(4, ref entry);
+            DA.GetDataList(4, entries);
             DA.GetData(5, ref toolWidth);
             DA.GetData(6, ref toolLength);
 
             List<Brep> cavaties = new List<Brep>();
+            List<string> debug = new List<string>();
 
             CavityInfo cInfo;
 
             if (toolLength > 0) cInfo = new CavityInfo(toolWidth, toolLength, depths.T0, depths.T1);
             else cInfo = new CavityInfo(toolWidth, depths.T0, depths.T1);
 
-            for (int i = 0; i < circles.Count; i++)
+            if (multiplicators.Count < circles.Count)
             {
-                Cavity c = new Cavity(circles[i], multiplicators[i], multiplyDepths, cInfo, entry);
+                debug.Add("The number of Multiplicators needs to be the same as the number of Circles.");
+            }
 
-                for (int j = 0; j < c.lofts.Count; j++)
+            if (entries.Count < circles.Count)
+            {
+                debug.Add("The number of EntryDepths needs to be the same as the number of Circles.");
+            }
+
+            else
+            {
+                for (int i = 0; i < circles.Count; i++)
                 {
-                    cavaties.Add(c.lofts[j]);
+                    Cavity c = new Cavity(circles[i], multiplicators[i], multiplyDepths, cInfo, entries[i]);
+
+                    for (int j = 0; j < c.lofts.Count; j++)
+                    {
+                        cavaties.Add(c.lofts[j]);
+                    }
                 }
             }
 
-            DA.SetDataList(0, cavaties);
+            DA.SetDataList(0, debug);
+            DA.SetDataList(1, cavaties);
         }
 
         /// <summary>
